@@ -140,34 +140,6 @@ function VisionModule({ isActive }) {
           left: 0
         }}
       />
-
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          handleCapture(PROMPTS.ALLERGY_CHECK);
-        }}
-        style={{
-          position: "absolute",
-          top: "20px",
-          right: "20px",
-          width: "60px",
-          height: "60px",
-          borderRadius: "30px",
-          backgroundColor: "rgba(255, 150, 0, 0.6)", // Distinct orange color for allergy warning
-          color: "white",
-          border: "2px solid #FF9600",
-          fontSize: "1.5rem",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
-          zIndex: 25,
-          backdropFilter: "blur(10px)"
-        }}
-        title="Check for Allergies"
-      >
-        🍽️
-      </button>
       
       <div style={{
         position: "absolute",
