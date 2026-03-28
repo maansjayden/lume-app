@@ -33,7 +33,7 @@ export async function callGemini(prompt, imageBase64 = null) {
   };
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const timeoutId = setTimeout(() => controller.abort(), 40000);
 
   try {
     const response = await fetch(url, {
