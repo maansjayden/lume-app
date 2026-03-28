@@ -2,7 +2,7 @@ import { speak } from './tts';
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-export const startListening = (onModuleSwitch) => {
+export const startListening = (onModuleSwitch, onSpeech) => {
   if (!SpeechRecognition) {
     console.warn("Speech recognition not supported in this browser.");
     return null;
@@ -24,6 +24,8 @@ export const startListening = (onModuleSwitch) => {
       onModuleSwitch('navigate');
     } else if (transcript.includes('read') || transcript.includes('text') || transcript.includes('document') || transcript.includes('book') || transcript.includes('page')) {
       onModuleSwitch('read');
+    } else if (onSpeech) {
+      onSpeech(transcript);
     }
   };
 

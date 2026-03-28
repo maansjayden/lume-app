@@ -1,4 +1,4 @@
-export async function callGemini(prompt, imageBase64) {
+export async function callGemini(prompt, imageBase64 = null) {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   
   if (!apiKey) {
@@ -6,31 +6,30 @@ export async function callGemini(prompt, imageBase64) {
     throw new Error("API Key is missing");
   }
 
-const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-  // Extract MIME type from data URL if present, default to image/jpeg
-  let mimeType = "image/jpeg";
-  let cleanBase64 = imageBase64;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  
+  const parts = [{ text: prompt }];
 
-  if (imageBase64.startsWith("data:")) {
-    const parts = imageBase64.split(";base64,");
-    mimeType = parts[0].split(":")[1];
-    cleanBase64 = parts[1];
+  if (imageBase64) {
+    let mimeType = "image/jpeg";
+    let cleanBase64 = imageBase64;
+
+    if (imageBase64.startsWith("data:")) {
+      const p = imageBase64.split(";base64,");
+      mimeType = p[0].split(":")[1];
+      cleanBase64 = p[1];
+    }
+    
+    parts.push({
+      inline_data: {
+        mime_type: mimeType,
+        data: cleanBase64
+      }
+    });
   }
 
   const body = {
-    contents: [
-      {
-        parts: [
-          { text: prompt },
-          {
-            inline_data: {
-              mime_type: mimeType,
-              data: cleanBase64
-            }
-          }
-        ]
-      }
-    ]
+    contents: [{ parts }]
   };
 
   const controller = new AbortController();
