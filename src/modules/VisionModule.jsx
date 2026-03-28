@@ -43,9 +43,9 @@ function VisionModule({ isActive }) {
       // If we started processing a manual scan or Lume started speaking while we were waiting, skip.
       if (processing || isLumeSpeaking()) return;
 
-      // Only speak if the information is new OR if it is a CAUTION message
+      // Only speak if the information is new OR if it is a CAUTION/ALLERGY message
       const lowerText = text.toLowerCase();
-      const isUrgent = lowerText.includes("caution") || lowerText.includes("danger") || lowerText.includes("path");
+      const isUrgent = lowerText.includes("caution") || lowerText.includes("danger") || lowerText.includes("path") || lowerText.includes("allergy");
 
       if (text !== lastSpokenRef.current || isUrgent) {
         if (isUrgent) {

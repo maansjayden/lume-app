@@ -1,5 +1,7 @@
 export const PROMPTS = {
-  VISION: `Describe exactly what is directly in front of the camera in one or two clear, objective sentences. Identify specific objects, their relative positions, and any immediate obstacles or hazards. Be precise and direct. Use plain text only. NEVER use asterisks or bolding.`,
+  VISION: `Describe exactly what is directly in front of the camera in one or two clear, objective sentences. Identify specific objects and their relative positions. 
+    IMPORTANT: If food or drink is visible, you MUST identify it and state potential allergens in one short sentence. 
+    Be precise and direct. Use plain text only. NEVER use asterisks or bolding.`,
   
   SIMPLIFY: `Summarize the text found in this image or document into exactly three short, simple bullet points. 
     Focus on the most important information. 
