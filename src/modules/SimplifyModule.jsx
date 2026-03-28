@@ -70,16 +70,15 @@ function SimplifyModule({ isActive }) {
     window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: true } }));
 
     try {
-      if (file.type === 'application/pdf') {
-        speak("Processing PDF document.");
-        const extractedText = await extractTextFromPDF(file);
-        const text = await callGemini(`Summarize this document into 3 simple bullet points for cognitive accessibility: ${extractedText}`);
-        speak(text);
-      } else {
-        const base64 = await fileToBase64(file);
-        const text = await callGemini(PROMPTS.SIMPLIFY, base64);
-        speak(text);
-      }
+      speak("Processing " + (file.type === 'application/pdf' ? "PDF document" : "image") + ".");
+      const base64 = await fileToBase64(file);
+      // For PDFs, we send the base64 to callGemini which handles the application/pdf mime type
+      const prompt = file.type === 'application/pdf' 
+        ? "Summarize this document into 3 simple bullet points for cognitive accessibility:" 
+        : PROMPTS.SIMPLIFY;
+      
+      const text = await callGemini(prompt, base64);
+      speak(text);
     } catch (error) {
       console.error("Simplify Upload Error:", error);
       speak("Sorry, I couldn't simplify that file.");
@@ -88,15 +87,6 @@ function SimplifyModule({ isActive }) {
       processingRef.current = false;
       window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: false } }));
     }
-  };
-
-  const extractTextFromPDF = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsText(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
   };
 
   const fileToBase64 = (file) => {
