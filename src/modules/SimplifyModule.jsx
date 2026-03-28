@@ -11,16 +11,17 @@ function SimplifyModule({ isActive }) {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    if (isActive && videoRef.current) {
-      startCamera(videoRef.current).catch(err => {
+    const videoElement = videoRef.current;
+    if (isActive && videoElement) {
+      startCamera(videoElement).catch(err => {
         console.error("Camera Error:", err);
         speak("Simplify camera failed. Please check permissions.");
       });
     }
 
     return () => {
-      if (videoRef.current) {
-        stopCamera(videoRef.current);
+      if (videoElement) {
+        stopCamera(videoElement);
       }
     };
   }, [isActive]);
@@ -86,6 +87,7 @@ function SimplifyModule({ isActive }) {
     };
     window.addEventListener('lume-command', handleCommand);
     return () => window.removeEventListener('lume-command', handleCommand);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive, processing]);
 
   useEffect(() => {
@@ -101,6 +103,7 @@ function SimplifyModule({ isActive }) {
       window.addEventListener('devicemotion', handleMotion);
     }
     return () => window.removeEventListener('devicemotion', handleMotion);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive, processing]);
 
   return (

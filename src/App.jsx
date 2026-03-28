@@ -3,7 +3,6 @@ import VisionModule from './modules/VisionModule'
 import SimplifyModule from './modules/SimplifyModule'
 import { speak } from './utils/tts'
 import { startListening } from './utils/stt'
-import { callGemini } from './utils/gemini'
 import { PROMPTS } from './prompts'
 
 function App() {
@@ -30,7 +29,7 @@ function App() {
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
       oscillator.start();
       oscillator.stop(audioCtx.currentTime + 0.5);
-    } catch (e) { console.warn("Audio context not supported") }
+    } catch { console.warn("Audio context not supported") }
   }
 
   const switchModule = (module) => {
@@ -78,6 +77,7 @@ function App() {
     return () => {
       if (recognition) recognition.stop()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [started])
 
   const handleStart = () => {

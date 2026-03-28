@@ -1,5 +1,3 @@
-import { speak } from './tts';
-
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 export const startListening = (onModuleSwitch, onSpeech) => {

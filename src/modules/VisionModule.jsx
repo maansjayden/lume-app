@@ -26,6 +26,7 @@ function VisionModule({ isActive }) {
     return () => {
       if (monitoringIntervalRef.current) clearInterval(monitoringIntervalRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive]);
 
   const performSafetyCheck = async () => {
@@ -92,6 +93,7 @@ function VisionModule({ isActive }) {
     };
     window.addEventListener('lume-command', handleCommand);
     return () => window.removeEventListener('lume-command', handleCommand);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive, processing]);
 
   useEffect(() => {
@@ -107,6 +109,7 @@ function VisionModule({ isActive }) {
       window.addEventListener('devicemotion', handleMotion);
     }
     return () => window.removeEventListener('devicemotion', handleMotion);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive, processing]);
 
   return (
