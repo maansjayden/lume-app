@@ -36,6 +36,7 @@ function SimplifyModule({ isActive }) {
     if (processingRef.current || !isActive) return;
 
     setProcessing(true);
+    processingRef.current = true;
     setTapped(true);
     setTimeout(() => setTapped(false), 150);
     window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: true } }));
@@ -55,6 +56,7 @@ function SimplifyModule({ isActive }) {
       speak("Sorry, I couldn't simplify that image.");
     } finally {
       setProcessing(false);
+      processingRef.current = false;
       window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: false } }));
     }
   };
@@ -69,6 +71,7 @@ function SimplifyModule({ isActive }) {
     }
 
     setProcessing(true);
+    processingRef.current = true;
     window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: true } }));
 
     try {
@@ -79,6 +82,7 @@ function SimplifyModule({ isActive }) {
       console.error("Simplify Upload Error:", error);
     } finally {
       setProcessing(false);
+      processingRef.current = false;
       window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: false } }));
     }
   };

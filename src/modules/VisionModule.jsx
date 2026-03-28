@@ -38,18 +38,19 @@ function VisionModule({ isActive }) {
   const performSafetyCheck = async () => {
     if (processingRef.current || !isActive || isLumeSpeaking()) return;
     
+    setProcessing(true);
+    processingRef.current = true;
+
     try {
       const frame = videoRef.current;
-      if (!frame || frame.readyState !== 4) return; // HAVE_ENOUGH_DATA
+      if (!frame || frame.readyState !== 4) return;
 
       const rawFrame = captureFrame(frame);
-      const compressed = await compressImage(rawFrame, 0.4); // More compression for background check
+      const compressed = await compressImage(rawFrame, 0.4);
       const text = await callGemini(PROMPTS.VISION, compressed);
       
-      // If we started processing a manual scan or Lume started speaking while we were waiting, skip.
-      if (processingRef.current || isLumeSpeaking()) return;
+      if (isLumeSpeaking()) return;
 
-      // Only speak if the information is new OR if it is a CAUTION/ALLERGY message
       const lowerText = text.toLowerCase();
       const isUrgent = lowerText.includes("caution") || lowerText.includes("danger") || lowerText.includes("path") || lowerText.includes("allergy");
 
@@ -62,6 +63,9 @@ function VisionModule({ isActive }) {
       }
     } catch (e) {
       console.error("Safety Check Error:", e);
+    } finally {
+      setProcessing(false);
+      processingRef.current = false;
     }
   };
 
@@ -69,6 +73,7 @@ function VisionModule({ isActive }) {
     if (processingRef.current) return;
     
     setProcessing(true);
+    processingRef.current = true;
     setTapped(true);
     setTimeout(() => setTapped(false), 150);
     window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: true } }));
@@ -84,11 +89,12 @@ function VisionModule({ isActive }) {
       const compressed = await compressImage(rawFrame, 0.6);
       const text = await callGemini(customPrompt, compressed);
       speak(text);
-      lastSpokenRef.current = text; // Update this so the safety check doesn't repeat it immediately
+      lastSpokenRef.current = text;
     } catch (error) {
       console.error("Vision Error:", error);
     } finally {
       setProcessing(false);
+      processingRef.current = false;
       window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: false } }));
     }
   };
