@@ -9,6 +9,8 @@ function App() {
   const [activeModule, setActiveModule] = useState('vision')
 
   useEffect(() => {
+    speak("Welcome to LUME. Tap anywhere to describe your surroundings. Say Read to switch to document mode.");
+    
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SpeechRecognition) {
       console.warn("Speech recognition not supported in this browser.")

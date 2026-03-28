@@ -31,7 +31,7 @@ function ScanModule({ isActive }) {
       speak(text);
     } catch (error) {
       console.error("Scan Error:", error);
-      setResult("Error scanning text.");
+      setResult("Error scanning image.");
     } finally {
       setProcessing(false);
     }
