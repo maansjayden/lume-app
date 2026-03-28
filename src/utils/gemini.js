@@ -53,7 +53,9 @@ export async function callGemini(prompt, imageBase64 = null) {
     }
 
     const data = await response.json();
-    return data.candidates[0].content.parts[0].text;
+    const rawText = data.candidates[0].content.parts[0].text;
+    // Strip all asterisks (*) to prevent TTS from speaking them
+    return rawText.replace(/\*/g, '').trim();
 
   } catch (error) {
     clearTimeout(timeoutId);

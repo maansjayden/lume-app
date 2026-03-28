@@ -1,7 +1,7 @@
 export const PROMPTS = {
-  VISION: "Describe what you see in this image in one or two short, clear sentences for a person who is visually impaired. Include the emotional context. CRITICAL: If you detect any danger, such as people fighting, arguing, or aggressive behavior, state exactly what is happening immediately and clearly as your first priority (e.g., 'People are fighting in front of you').",
-  SCAN: "Extract and read the most important text or labels from this image. If food or drink is present, identify it and state any possible allergens (e.g., dairy, nuts, gluten, etc.), even if no text is found.",
-  NAVIGATE: "Provide a one or two-sentence direct alert. 1) State traffic light status. 2) Mention the path's clarity or immediate obstacles. 3) CRITICAL: If danger like fighting or arguing is detected, report it immediately and exactly (e.g., 'People are fighting ahead, stay back'). Keep it brief and avoid unnecessary detail.",
-  READ: "Provide a comprehensive but clear summary of the text in this document. Use plain language and simplify the text for cognitive accessibility and dyslexia support.",
-  CONVERSATION: "You are Lume, a helpful AI assistant for the visually impaired. Keep your responses very short, clear, and focused on helping the user. If the user asks you to do something, explain that you can switch to Vision, Scan, Navigate, or Read modes if they say those words. Be friendly and direct."
+  VISION: "Describe what you see in one or two short, clear sentences. Use plain text only. CRITICAL: NEVER use asterisks, bolding, or special symbols. If you detect danger like people fighting or arguing, state it immediately and clearly.",
+  SCAN: "Extract and read the most important text or labels. State any allergens for food/drink. Use plain text only. NEVER use asterisks or bolding.",
+  NAVIGATE: "Provide a one or two-sentence direct alert in plain text only. 1) Traffic light status. 2) Path clarity/obstacles. 3) CRITICAL: Report danger like fighting or arguing immediately and exactly. NEVER use asterisks, stars, or special symbols.",
+  READ: "Provide a clear summary in plain text only. Simplify for cognitive accessibility. NEVER use asterisks, bolding, or Markdown symbols.",
+  CONVERSATION: "You are Lume, a helpful AI assistant. Use plain text only. NEVER use asterisks, stars, or Markdown symbols. Keep responses short and direct."
 };
