@@ -47,7 +47,7 @@ function App() {
       switchModule('vision')
       return
     }
-    if (lower.includes('switch to simplify') || lower.includes('go to simplify') || (lower.includes('simplify') && lower.includes('mode'))) {
+    if (lower.includes('switch to simplify') || lower.includes('go to simplify') || (lower.includes('simplify') && lower.includes('mode')) || lower === 'read' || lower.includes('read mode')) {
       switchModule('simplify')
       return
     }
@@ -64,7 +64,7 @@ function App() {
   useEffect(() => {
     if (!started) return;
 
-    speak("Lume is active.");
+    speak("Welcome to Lume. Tap anywhere to describe your surroundings. Say Read to switch to simplify mode.");
     
     const recognition = startListening(
       (module) => { 
