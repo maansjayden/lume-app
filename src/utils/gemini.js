@@ -6,8 +6,7 @@ export async function callGemini(prompt, imageBase64) {
     throw new Error("API Key is missing");
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
+const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
   // Extract MIME type from data URL if present, default to image/jpeg
   let mimeType = "image/jpeg";
   let cleanBase64 = imageBase64;
