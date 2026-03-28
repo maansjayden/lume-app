@@ -74,25 +74,50 @@ function NavigateModule({ isActive }) {
           width: "100%",
           height: "100%",
           objectFit: "cover",
-          opacity: 0.4,
+          opacity: 0.6,
           position: "absolute",
           top: 0,
           left: 0
         }}
       />
+
+      <div style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        padding: "20px",
+        background: "linear-gradient(to bottom, rgba(0,0,0,0.8), transparent)",
+        zIndex: 10,
+        pointerEvents: "none"
+      }}>
+        <h2 style={{ margin: 0, fontSize: "1.4rem", color: "#FFD700" }}>NAVIGATE MODE</h2>
+        <p style={{ margin: "5px 0 0 0", fontSize: "0.9rem", opacity: 0.9 }}>
+          Analyzing path and safety. Tap or shake to update.
+        </p>
+      </div>
       
       <div style={{
         marginTop: "auto",
-        padding: "20px",
+        padding: "30px 20px",
         zIndex: 2,
-        backgroundColor: "rgba(10, 10, 10, 0.8)",
-        borderTop: "4px solid #8A5A00",
-        minHeight: "100px",
+        backgroundColor: "rgba(10, 10, 10, 0.9)",
+        borderTop: "6px solid #FFD700",
+        minHeight: "150px",
         color: "#FFF",
-        fontSize: "1.2rem",
-        textAlign: "center"
+        fontSize: "1.4rem",
+        fontWeight: "bold",
+        textAlign: "center",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        lineHeight: "1.3"
       }}>
-        {processing ? "Processing..." : result || "Tap or shake to navigate"}
+        {processing ? (
+          <div style={{ color: "#FFD700" }}>ANALYZING PATH...</div>
+        ) : (
+          result || "TAP TO CHECK YOUR PATH"
+        )}
       </div>
     </div>
   );
