@@ -65,21 +65,23 @@ function SimplifyModule({ isActive }) {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (file.type === 'application/pdf') {
-      speak("PDF support coming soon. Please take a photo of the document instead.");
-      return;
-    }
-
     setProcessing(true);
     processingRef.current = true;
     window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: true } }));
 
     try {
+      speak("Processing " + (file.type === 'application/pdf' ? "PDF document" : "image") + ".");
       const base64 = await fileToBase64(file);
-      const text = await callGemini(PROMPTS.SIMPLIFY, base64);
+      // For PDFs, we send the base64 to callGemini which handles the application/pdf mime type
+      const prompt = file.type === 'application/pdf' 
+        ? "Summarize this document into 3 simple bullet points for cognitive accessibility:" 
+        : PROMPTS.SIMPLIFY;
+      
+      const text = await callGemini(prompt, base64);
       speak(text);
     } catch (error) {
       console.error("Simplify Upload Error:", error);
+      speak("Sorry, I couldn't simplify that file.");
     } finally {
       setProcessing(false);
       processingRef.current = false;
