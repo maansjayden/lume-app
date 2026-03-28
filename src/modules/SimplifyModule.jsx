@@ -30,7 +30,7 @@ function SimplifyModule({ isActive }) {
     if (processing || !isActive) return;
 
     setProcessing(true);
-    window.dispatchEvent(new CustomEvent('lume-thinking', { detail: true }));
+    window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: true } }));
 
     try {
       const frame = videoRef.current;
@@ -47,7 +47,7 @@ function SimplifyModule({ isActive }) {
       speak("Sorry, I couldn't simplify that image.");
     } finally {
       setProcessing(false);
-      window.dispatchEvent(new CustomEvent('lume-thinking', { detail: false }));
+      window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: false } }));
     }
   };
 
@@ -56,7 +56,7 @@ function SimplifyModule({ isActive }) {
     if (!file) return;
 
     setProcessing(true);
-    window.dispatchEvent(new CustomEvent('lume-thinking', { detail: true }));
+    window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: true } }));
 
     try {
       const base64 = await fileToBase64(file);
@@ -66,7 +66,7 @@ function SimplifyModule({ isActive }) {
       console.error("Simplify Upload Error:", error);
     } finally {
       setProcessing(false);
-      window.dispatchEvent(new CustomEvent('lume-thinking', { detail: false }));
+      window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: false } }));
     }
   };
 

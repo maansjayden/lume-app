@@ -63,7 +63,7 @@ function VisionModule({ isActive }) {
     if (processing) return;
     
     setProcessing(true);
-    window.dispatchEvent(new CustomEvent('lume-thinking', { detail: true }));
+    window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: true } }));
 
     try {
       const frame = videoRef.current;
@@ -81,7 +81,7 @@ function VisionModule({ isActive }) {
       console.error("Vision Error:", error);
     } finally {
       setProcessing(false);
-      window.dispatchEvent(new CustomEvent('lume-thinking', { detail: false }));
+      window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: false } }));
     }
   };
 

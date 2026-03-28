@@ -3,6 +3,7 @@ import VisionModule from './modules/VisionModule'
 import SimplifyModule from './modules/SimplifyModule'
 import { speak } from './utils/tts'
 import { startListening } from './utils/stt'
+import { callGemini } from './utils/gemini'
 import { PROMPTS } from './prompts'
 
 function App() {
@@ -40,7 +41,7 @@ function App() {
     }
   }
 
-  const handleGlobalVoice = (transcript) => {
+  const handleGlobalVoice = async (transcript) => {
     const lower = transcript.toLowerCase()
     
     // Check for mode switches
@@ -56,10 +57,29 @@ function App() {
     // Special commands
     if (lower.includes('check for allergies') || lower.includes('allergy')) {
       window.dispatchEvent(new CustomEvent('lume-command', { detail: 'ALLERGY_CHECK' }))
+      return
     } else if (lower.includes('simplify this') || lower.includes('read this') || lower.includes('read it')) {
       window.dispatchEvent(new CustomEvent('lume-command', { detail: 'SIMPLIFY_THIS' }))
-    } else if (lower.includes('help') || (lower.includes('what') && lower.includes('do'))) {
-      speak("You are in " + activeModuleRef.current + " mode. You can say 'switch to simplify' or 'switch to vision'. You can also ask me to check for allergies or simplify a document.")
+      return
+    }
+
+    // General Conversation / Interaction
+    if (lower.includes('lume') || lower.includes('hello') || lower.includes('hi')) {
+      if (lower.includes('help') || (lower.includes('what') && lower.includes('do'))) {
+        speak("I am Lume. You are in " + activeModuleRef.current + " mode. You can say 'switch to simplify' or 'switch to vision'. You can also ask me to check for allergies, simplify a document, or just talk to me.")
+        return
+      }
+
+      // If it's a general question or address to Lume
+      window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: true, quiet: true } }))
+      try {
+        const response = await callGemini(`${PROMPTS.CONVERSATION}\nUser said: ${transcript}`)
+        speak(response)
+      } catch (error) {
+        console.error("Conversation Error:", error)
+      } finally {
+        window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: false } }))
+      }
     }
   }
 
@@ -90,9 +110,12 @@ function App() {
   // Listen for "Busy Processing" signal from modules
   useEffect(() => {
     const handleThinking = (e) => {
-      if (e.detail === true) {
+      const isQuiet = e.detail?.quiet === true
+      const isActive = e.detail === true || e.detail?.active === true
+
+      if (isActive) {
         setIsLumeThinking(true)
-        speak("Lume is thinking...")
+        if (!isQuiet) speak("Lume is thinking...")
       } else {
         setIsLumeThinking(false)
       }
