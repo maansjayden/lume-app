@@ -8,6 +8,7 @@ import { PROMPTS } from '../prompts.js';
 function SimplifyModule({ isActive }) {
   const [processing, setProcessing] = useState(false);
   const videoRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (isActive && videoRef.current) {
@@ -40,6 +41,34 @@ function SimplifyModule({ isActive }) {
       setProcessing(false);
       window.dispatchEvent(new CustomEvent('lume-thinking', { detail: false }));
     }
+  };
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setProcessing(true);
+    window.dispatchEvent(new CustomEvent('lume-thinking', { detail: true }));
+
+    try {
+      const base64 = await fileToBase64(file);
+      const text = await callGemini(PROMPTS.SIMPLIFY, base64);
+      speak(text);
+    } catch (error) {
+      console.error("Simplify Upload Error:", error);
+    } finally {
+      setProcessing(false);
+      window.dispatchEvent(new CustomEvent('lume-thinking', { detail: false }));
+    }
+  };
+
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
   };
 
   useEffect(() => {
@@ -106,6 +135,42 @@ function SimplifyModule({ isActive }) {
       }}>
         TAP OR SHAKE TO SIMPLIFY TEXT
       </div>
+
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          fileInputRef.current.click();
+        }}
+        style={{
+          position: "absolute",
+          top: "20px",
+          right: "20px",
+          width: "60px",
+          height: "60px",
+          borderRadius: "30px",
+          backgroundColor: "rgba(0, 150, 255, 0.6)",
+          color: "white",
+          border: "2px solid #0096FF",
+          fontSize: "1.5rem",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          zIndex: 25,
+          backdropFilter: "blur(10px)"
+        }}
+        title="Upload Document"
+      >
+        📄
+      </button>
+      
+      <input 
+        type="file" 
+        ref={fileInputRef}
+        accept="image/*,application/pdf" 
+        onChange={handleFileUpload}
+        style={{ display: "none" }}
+      />
     </div>
   );
 }
