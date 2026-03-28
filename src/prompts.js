@@ -15,8 +15,11 @@ export const PROMPTS = {
     If no clear text is found, say "No readable text detected."
     Use plain text only. NEVER use asterisks or bolding.`,
 
-  ALLERGY_CHECK: `Scan this image specifically for peanuts, gluten, or dairy. 
-    Report immediately if any are found or if the ingredients are unclear. 
+  ALLERGY_CHECK: `Analyze the food or drink in this image. 
+    1. Identify the items: Name the specific food or beverage.
+    2. Potential Allergens: List possible common allergens (e.g., peanuts, tree nuts, dairy, eggs, wheat/gluten, soy, fish, shellfish) that might be present based on the visual identification.
+    3. Caution: If you are unsure or if ingredients are hidden, explicitly state that caution is needed.
+    4. Format: Be concise and use very simple language.
     Use plain text only. NEVER use asterisks or bolding.`,
 
   CONVERSATION: `You are Lume, a helpful AI assistant for the visually impaired. 
