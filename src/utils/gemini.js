@@ -1,8 +1,22 @@
 export async function callGemini(prompt, imageBase64) {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  
+  if (!apiKey) {
+    window.alert("KEY_MISSING");
+    throw new Error("API Key is missing");
+  }
+
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
-  const cleanBase64 = imageBase64.split(',')[1] || imageBase64;
+  // Extract MIME type from data URL if present, default to image/jpeg
+  let mimeType = "image/jpeg";
+  let cleanBase64 = imageBase64;
+
+  if (imageBase64.startsWith("data:")) {
+    const parts = imageBase64.split(";base64,");
+    mimeType = parts[0].split(":")[1];
+    cleanBase64 = parts[1];
+  }
 
   const body = {
     contents: [
@@ -11,7 +25,7 @@ export async function callGemini(prompt, imageBase64) {
           { text: prompt },
           {
             inline_data: {
-              mime_type: "image/jpeg",
+              mime_type: mimeType,
               data: cleanBase64
             }
           }
@@ -20,12 +34,37 @@ export async function callGemini(prompt, imageBase64) {
     ]
   };
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-  const data = await response.json();
-  return data.candidates[0].content.parts[0].text;
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      const msg = errorData?.error?.message || "Unknown API Error";
+      window.alert(`GEMINI_ERROR: ${msg}`);
+      throw new Error(msg);
+    }
+
+    const data = await response.json();
+    return data.candidates[0].content.parts[0].text;
+
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      window.alert("REQUEST_TIMEOUT");
+      throw new Error("Request timed out after 10 seconds");
+    } else {
+      window.alert(`FETCH_ERROR: ${error.message}`);
+      throw error;
+    }
+  }
 }
