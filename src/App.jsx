@@ -43,6 +43,7 @@ function App() {
   const handleGlobalVoice = (transcript) => {
     const lower = transcript.toLowerCase()
     
+    // Check for mode switches
     if (lower.includes('switch to vision') || lower.includes('go to vision') || (lower.includes('vision') && lower.includes('mode'))) {
       switchModule('vision')
       return
@@ -52,9 +53,10 @@ function App() {
       return
     }
 
+    // Special commands
     if (lower.includes('check for allergies') || lower.includes('allergy')) {
       window.dispatchEvent(new CustomEvent('lume-command', { detail: 'ALLERGY_CHECK' }))
-    } else if (lower.includes('simplify this') || lower.includes('read this')) {
+    } else if (lower.includes('simplify this') || lower.includes('read this') || lower.includes('read it')) {
       window.dispatchEvent(new CustomEvent('lume-command', { detail: 'SIMPLIFY_THIS' }))
     } else if (lower.includes('help') || (lower.includes('what') && lower.includes('do'))) {
       speak("You are in " + activeModuleRef.current + " mode. You can say 'switch to simplify' or 'switch to vision'. You can also ask me to check for allergies or simplify a document.")
@@ -64,9 +66,10 @@ function App() {
   useEffect(() => {
     if (!started) return;
 
+    // Welcome message requested by the user
     speak("Welcome to Lume. Tap anywhere to describe your surroundings. Say Read to switch to simplify mode.");
     
-    const recognition = startListening(
+    const listener = startListening(
       (module) => { 
         if (module === 'read') switchModule('simplify');
         else if (module === 'vision') switchModule('vision');
@@ -75,7 +78,7 @@ function App() {
     )
 
     return () => {
-      if (recognition) recognition.stop()
+      if (listener) listener.stop()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [started])
@@ -116,7 +119,8 @@ function App() {
           textAlign: "center",
           padding: "20px",
           boxSizing: "border-box",
-          cursor: "pointer"
+          cursor: "pointer",
+          userSelect: "none"
         }}
       >
         <div style={{ fontSize: "5rem", marginBottom: "20px" }}>👁️</div>
@@ -158,7 +162,8 @@ function App() {
           zIndex: 100,
           backdropFilter: "blur(10px)",
           border: "2px solid rgba(0, 150, 255, 0.6)",
-          animation: "pulse 1.5s infinite"
+          animation: "pulse 1.5s infinite",
+          pointerEvents: "none"
         }}>
           LUME IS THINKING...
         </div>
@@ -168,12 +173,16 @@ function App() {
         display: "flex",
         height: "80px",
         backgroundColor: "#000",
-        borderTop: "2px solid #333"
+        borderTop: "2px solid #333",
+        zIndex: 50
       }}>
         {['vision', 'simplify'].map(mod => (
           <button 
             key={mod}
-            onClick={() => switchModule(mod)}
+            onClick={(e) => {
+              e.stopPropagation()
+              switchModule(mod)
+            }}
             style={{
               flex: 1,
               backgroundColor: activeModule === mod ? "#222" : "transparent",
