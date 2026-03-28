@@ -199,7 +199,13 @@ function App() {
         height: "80px",
         backgroundColor: "#000",
         borderTop: "2px solid #333",
-        zIndex: 50
+        zIndex: 100,
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        paddingBottom: "env(safe-area-inset-bottom)",
+        marginBottom: "30px"
       }}>
         {['vision', 'simplify'].map(mod => (
           <button 
