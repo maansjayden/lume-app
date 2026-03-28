@@ -7,9 +7,15 @@ import { PROMPTS } from '../prompts.js';
 
 function VisionModule({ isActive }) {
   const [processing, setProcessing] = useState(false);
+  const [tapped, setTapped] = useState(false);
+  const processingRef = useRef(false);
   const videoRef = useRef(null);
   const monitoringIntervalRef = useRef(null);
   const lastSpokenRef = useRef("");
+
+  useEffect(() => {
+    processingRef.current = processing;
+  }, [processing]);
 
   useEffect(() => {
     if (isActive) {
@@ -30,7 +36,7 @@ function VisionModule({ isActive }) {
   }, [isActive]);
 
   const performSafetyCheck = async () => {
-    if (processing || !isActive || isLumeSpeaking()) return;
+    if (processingRef.current || !isActive || isLumeSpeaking()) return;
     
     try {
       const frame = videoRef.current;
@@ -41,7 +47,7 @@ function VisionModule({ isActive }) {
       const text = await callGemini(PROMPTS.VISION, compressed);
       
       // If we started processing a manual scan or Lume started speaking while we were waiting, skip.
-      if (processing || isLumeSpeaking()) return;
+      if (processingRef.current || isLumeSpeaking()) return;
 
       // Only speak if the information is new OR if it is a CAUTION/ALLERGY message
       const lowerText = text.toLowerCase();
@@ -60,9 +66,11 @@ function VisionModule({ isActive }) {
   };
 
   const handleCapture = async (customPrompt = PROMPTS.VISION) => {
-    if (processing) return;
+    if (processingRef.current) return;
     
     setProcessing(true);
+    setTapped(true);
+    setTimeout(() => setTapped(false), 150);
     window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: true } }));
 
     try {
@@ -93,14 +101,13 @@ function VisionModule({ isActive }) {
     };
     window.addEventListener('lume-command', handleCommand);
     return () => window.removeEventListener('lume-command', handleCommand);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive, processing]);
 
   useEffect(() => {
     const handleMotion = (event) => {
       const { x, y, z } = event.acceleration || {};
       const threshold = 15;
-      if ((Math.abs(x) > threshold || Math.abs(y) > threshold || Math.abs(z) > threshold) && !processing && isActive) {
+      if ((Math.abs(x) > threshold || Math.abs(y) > threshold || Math.abs(z) > threshold) && !processingRef.current && isActive) {
         handleCapture();
       }
     };
@@ -109,7 +116,6 @@ function VisionModule({ isActive }) {
       window.addEventListener('devicemotion', handleMotion);
     }
     return () => window.removeEventListener('devicemotion', handleMotion);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive, processing]);
 
   return (
@@ -141,6 +147,25 @@ function VisionModule({ isActive }) {
         }}
       />
       
+      {tapped && (
+        <div style={{
+          position: "absolute",
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: "rgba(0, 150, 255, 0.15)",
+          zIndex: 10,
+          pointerEvents: "none"
+        }} />
+      )}
+
+      <div style={{
+        position: "absolute", top: "20px", left: "20px",
+        zIndex: 2, color: "rgba(0,150,255,0.8)",
+        fontSize: "0.75rem", fontWeight: "bold",
+        letterSpacing: "3px", pointerEvents: "none"
+      }}>
+        VISION
+      </div>
+
       <div style={{
         position: "absolute",
         bottom: "40px",

@@ -1,3 +1,5 @@
+import { isLumeSpeaking } from './tts';
+
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 export const startListening = (onModuleSwitch, onSpeech) => {
@@ -13,6 +15,8 @@ export const startListening = (onModuleSwitch, onSpeech) => {
   let isIntentionallyStopped = false;
 
   recognition.onresult = (event) => {
+    if (isLumeSpeaking()) return;
+
     const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
     
     // Check for specific mode switches

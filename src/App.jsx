@@ -128,6 +128,8 @@ function App() {
     return (
       <div 
         onClick={handleStart}
+        role="button"
+        aria-label="Tap to start Lume"
         style={{
           width: "100vw",
           height: "100vh",
@@ -206,6 +208,7 @@ function App() {
               e.stopPropagation()
               switchModule(mod)
             }}
+            aria-label={`Switch to ${mod} mode`}
             style={{
               flex: 1,
               backgroundColor: activeModule === mod ? "#222" : "transparent",
@@ -214,7 +217,12 @@ function App() {
               textTransform: "uppercase",
               fontSize: "1rem",
               fontWeight: "bold",
-              letterSpacing: "2px"
+              letterSpacing: "2px",
+              cursor: "pointer",
+              minHeight: "80px",
+              transition: "background-color 0.2s",
+              WebkitTapHighlightColor: "transparent",
+              touchAction: "manipulation"
             }}
           >
             {mod}

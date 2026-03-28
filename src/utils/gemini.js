@@ -1,8 +1,10 @@
+import { speak } from './tts';
+
 export async function callGemini(prompt, imageBase64 = null) {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   
   if (!apiKey) {
-    window.alert("KEY_MISSING");
+    speak("Lume is not configured. API key is missing.");
     throw new Error("API Key is missing");
   }
 
@@ -47,7 +49,7 @@ const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-
     if (!response.ok) {
       const errorData = await response.json();
       const msg = errorData?.error?.message || "Unknown API Error";
-      window.alert(`GEMINI_ERROR: ${msg}`);
+      speak("Lume encountered an error. Please try again.");
       throw new Error(msg);
     }
 
@@ -59,10 +61,10 @@ const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-
   } catch (error) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      window.alert("REQUEST_TIMEOUT");
-      throw new Error("Request timed out after 10 seconds");
+      speak("Request timed out. Please try again.");
+      throw new Error("Request timed out after 40 seconds");
     } else {
-      window.alert(`FETCH_ERROR: ${error.message}`);
+      speak("Network error. Please check your connection.");
       throw error;
     }
   }

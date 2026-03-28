@@ -7,8 +7,14 @@ import { PROMPTS } from '../prompts.js';
 
 function SimplifyModule({ isActive }) {
   const [processing, setProcessing] = useState(false);
+  const [tapped, setTapped] = useState(false);
+  const processingRef = useRef(false);
   const videoRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    processingRef.current = processing;
+  }, [processing]);
 
   useEffect(() => {
     const videoElement = videoRef.current;
@@ -27,9 +33,11 @@ function SimplifyModule({ isActive }) {
   }, [isActive]);
 
   const handleCapture = async () => {
-    if (processing || !isActive) return;
+    if (processingRef.current || !isActive) return;
 
     setProcessing(true);
+    setTapped(true);
+    setTimeout(() => setTapped(false), 150);
     window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: true } }));
 
     try {
@@ -54,6 +62,11 @@ function SimplifyModule({ isActive }) {
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
+
+    if (file.type === 'application/pdf') {
+      speak("PDF support coming soon. Please take a photo of the document instead.");
+      return;
+    }
 
     setProcessing(true);
     window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: true } }));
@@ -87,14 +100,13 @@ function SimplifyModule({ isActive }) {
     };
     window.addEventListener('lume-command', handleCommand);
     return () => window.removeEventListener('lume-command', handleCommand);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive, processing]);
 
   useEffect(() => {
     const handleMotion = (event) => {
       const { x, y, z } = event.acceleration || {};
       const threshold = 15;
-      if ((Math.abs(x) > threshold || Math.abs(y) > threshold || Math.abs(z) > threshold) && !processing && isActive) {
+      if ((Math.abs(x) > threshold || Math.abs(y) > threshold || Math.abs(z) > threshold) && !processingRef.current && isActive) {
         handleCapture();
       }
     };
@@ -103,7 +115,6 @@ function SimplifyModule({ isActive }) {
       window.addEventListener('devicemotion', handleMotion);
     }
     return () => window.removeEventListener('devicemotion', handleMotion);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive, processing]);
 
   return (
@@ -132,6 +143,25 @@ function SimplifyModule({ isActive }) {
         }}
       />
 
+      {tapped && (
+        <div style={{
+          position: "absolute",
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: "rgba(0, 150, 255, 0.15)",
+          zIndex: 10,
+          pointerEvents: "none"
+        }} />
+      )}
+
+      <div style={{
+        position: "absolute", top: "20px", left: "20px",
+        zIndex: 2, color: "rgba(0,150,255,0.8)",
+        fontSize: "0.75rem", fontWeight: "bold",
+        letterSpacing: "3px", pointerEvents: "none"
+      }}>
+        SIMPLIFY
+      </div>
+
       <div style={{
         position: "absolute",
         bottom: "40px",
@@ -151,6 +181,7 @@ function SimplifyModule({ isActive }) {
           e.stopPropagation();
           fileInputRef.current.click();
         }}
+        aria-label="Upload document"
         style={{
           position: "absolute",
           top: "20px",

@@ -42,6 +42,9 @@ export function stopCamera(videoElement) {
 }
 
 export function captureFrame(videoElement) {
+  if (!videoElement || videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
+    throw new Error("Camera frame not ready");
+  }
   const canvas = document.createElement('canvas');
   canvas.width = videoElement.videoWidth;
   canvas.height = videoElement.videoHeight;
