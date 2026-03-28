@@ -2,19 +2,23 @@ import { useEffect, useRef, useState } from 'react';
 import { startCamera, stopCamera, captureFrame } from '../utils/camera.js';
 import { compressImage } from '../utils/compress.js';
 import { callGemini } from '../utils/gemini.js';
-import { speak } from '../utils/tts.js';
+import { speak, isLumeSpeaking } from '../utils/tts.js';
 import { PROMPTS } from '../prompts.js';
 
 function VisionModule({ isActive }) {
   const [processing, setProcessing] = useState(false);
   const videoRef = useRef(null);
   const monitoringIntervalRef = useRef(null);
+  const lastSpokenRef = useRef("");
 
   useEffect(() => {
     if (isActive) {
-      startCamera(videoRef.current).catch(err => console.error("Camera error:", err));
-      // Continuous monitoring for safety (every 4 seconds)
-      monitoringIntervalRef.current = setInterval(performSafetyCheck, 4000);
+      startCamera(videoRef.current).catch(err => {
+        console.error("Camera error:", err);
+        speak("Camera failed to start. Please check permissions.");
+      });
+      // Continuous monitoring for safety (every 5 seconds instead of 4 for more breathing room)
+      monitoringIntervalRef.current = setInterval(performSafetyCheck, 5000);
     } else {
       stopCamera(videoRef.current);
       if (monitoringIntervalRef.current) clearInterval(monitoringIntervalRef.current);
@@ -24,18 +28,26 @@ function VisionModule({ isActive }) {
     };
   }, [isActive]);
 
-  const lastSpokenRef = useRef("");
-
   const performSafetyCheck = async () => {
-    if (processing || !isActive) return;
+    if (processing || !isActive || isLumeSpeaking()) return;
+    
     try {
-      const rawFrame = captureFrame(videoRef.current);
-      const compressed = await compressImage(rawFrame, 0.5);
+      const frame = videoRef.current;
+      if (!frame || frame.readyState !== 4) return; // HAVE_ENOUGH_DATA
+
+      const rawFrame = captureFrame(frame);
+      const compressed = await compressImage(rawFrame, 0.4); // More compression for background check
       const text = await callGemini(PROMPTS.VISION, compressed);
       
-      // Only speak if the information is new or important
-      if (text !== lastSpokenRef.current) {
-        if (text.toLowerCase().includes("caution") || text.toLowerCase().includes("danger")) {
+      // If we started processing a manual scan or Lume started speaking while we were waiting, skip.
+      if (processing || isLumeSpeaking()) return;
+
+      // Only speak if the information is new OR if it is a CAUTION message
+      const lowerText = text.toLowerCase();
+      const isUrgent = lowerText.includes("caution") || lowerText.includes("danger") || lowerText.includes("path");
+
+      if (text !== lastSpokenRef.current || isUrgent) {
+        if (isUrgent) {
           navigator.vibrate?.([200, 100, 200]);
         }
         speak(text);
@@ -53,10 +65,17 @@ function VisionModule({ isActive }) {
     window.dispatchEvent(new CustomEvent('lume-thinking', { detail: true }));
 
     try {
-      const rawFrame = captureFrame(videoRef.current);
+      const frame = videoRef.current;
+      if (!frame || frame.readyState !== 4) {
+        speak("Camera is not ready. Trying again.");
+        await startCamera(frame);
+      }
+
+      const rawFrame = captureFrame(frame);
       const compressed = await compressImage(rawFrame, 0.6);
       const text = await callGemini(customPrompt, compressed);
       speak(text);
+      lastSpokenRef.current = text; // Update this so the safety check doesn't repeat it immediately
     } catch (error) {
       console.error("Vision Error:", error);
     } finally {

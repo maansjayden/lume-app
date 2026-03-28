@@ -1,9 +1,12 @@
 export const PROMPTS = {
-  VISION: `Analyze the environment in one short, clear sentence. 
-    1. OBSTACLES: Identify SPECIFIC objects (e.g., "a chair", "a parked car", "a person walking"). If the path is clear, say "The road is clear."
-    2. SAFETY: If there is immediate danger, explicitly say "Caution: [Object] is very close." 
-    3. TRAFFIC: Explicitly say "Safe to cross: Green Robot detected" only if you see a South African pedestrian green light.
-    4. FOOD: If food or a menu is visible, identify the food type, list possible common allergens (peanuts, gluten, dairy), and provide any safety warnings.
+  VISION: `Describe the immediate environment in one short, clear sentence.
+    1. OBJECTS: Identify what you see directly in front of the camera (e.g., "a wooden table", "a person standing", "a doorway").
+    2. SPATIAL: Mention the distance or position if relevant (e.g., "about two meters away", "to your left").
+    3. SAFETY: If there is an immediate obstacle that could cause a trip or collision, say "Caution: [Object] is in your path."
+    4. TRAFFIC: Only if looking at a street, mention "Green Robot" if a pedestrian crossing light is green.
+    5. FOOD: Briefly identify food or menus and mention common allergens if visible.
+    Be objective. If you see nothing specific, describe the general space (e.g., "an open room"). 
+    Avoid generic phrases like "The road is clear" unless you are actually on a road.
     Use plain text only. NEVER use asterisks or bolding.`,
   
   SIMPLIFY: `Rewrite the text from this image to be more accessible for someone with cognitive disabilities. 

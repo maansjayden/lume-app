@@ -7,6 +7,7 @@ import { callGemini } from './utils/gemini'
 import { PROMPTS } from './prompts'
 
 function App() {
+  const [started, setStarted] = useState(false)
   const [activeModule, setActiveModule] = useState('vision')
   const [isLumeThinking, setIsLumeThinking] = useState(false)
   const activeModuleRef = useRef(activeModule)
@@ -16,9 +17,6 @@ function App() {
   }, [activeModule])
 
   const playWhoosh = () => {
-    // Synthetic "whoosh" using SpeechSynthesis or a simple audio oscillator if needed.
-    // For now, we'll use a short pitch-swept beep or just rely on the voice transition.
-    // A real app would use an asset. Let's use a subtle audio context beep.
     try {
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const oscillator = audioCtx.createOscillator();
@@ -46,38 +44,45 @@ function App() {
   const handleGlobalVoice = (transcript) => {
     const lower = transcript.toLowerCase()
     
-    // Module switching
-    if (lower.includes('vision') || lower.includes('see') || lower.includes('look')) {
+    if (lower.includes('switch to vision') || lower.includes('go to vision') || (lower.includes('vision') && lower.includes('mode'))) {
       switchModule('vision')
       return
     }
-    if (lower.includes('simplify') || lower.includes('text') || lower.includes('read')) {
+    if (lower.includes('switch to simplify') || lower.includes('go to simplify') || (lower.includes('simplify') && lower.includes('mode'))) {
       switchModule('simplify')
       return
     }
 
-    // Special commands
     if (lower.includes('check for allergies') || lower.includes('allergy')) {
       window.dispatchEvent(new CustomEvent('lume-command', { detail: 'ALLERGY_CHECK' }))
-    } else if (lower.includes('simplify this')) {
+    } else if (lower.includes('simplify this') || lower.includes('read this')) {
       window.dispatchEvent(new CustomEvent('lume-command', { detail: 'SIMPLIFY_THIS' }))
-    } else if (lower.includes('lume') || lower.includes('help')) {
-      speak("How can I help you? You can ask me to switch to vision or simplify mode, check for allergies, or simplify a document.")
+    } else if (lower.includes('help') || (lower.includes('what') && lower.includes('do'))) {
+      speak("You are in " + activeModuleRef.current + " mode. You can say 'switch to simplify' or 'switch to vision'. You can also ask me to check for allergies or simplify a document.")
     }
   }
 
   useEffect(() => {
-    speak("Lume is ready. Say Hello Lume for help.");
+    if (!started) return;
+
+    speak("Lume is active.");
     
     const recognition = startListening(
-      (module) => { /* handled in handleGlobalVoice */ },
+      (module) => { 
+        if (module === 'read') switchModule('simplify');
+        else if (module === 'vision') switchModule('vision');
+      },
       handleGlobalVoice
     )
 
     return () => {
       if (recognition) recognition.stop()
     }
-  }, [])
+  }, [started])
+
+  const handleStart = () => {
+    setStarted(true)
+  }
 
   // Listen for "Busy Processing" signal from modules
   useEffect(() => {
@@ -92,6 +97,33 @@ function App() {
     window.addEventListener('lume-thinking', handleThinking)
     return () => window.removeEventListener('lume-thinking', handleThinking)
   }, [])
+
+  if (!started) {
+    return (
+      <div 
+        onClick={handleStart}
+        style={{
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "#000",
+          color: "#0096FF",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "2rem",
+          fontWeight: "bold",
+          textAlign: "center",
+          padding: "20px",
+          boxSizing: "border-box",
+          cursor: "pointer"
+        }}
+      >
+        <div style={{ fontSize: "5rem", marginBottom: "20px" }}>👁️</div>
+        TAP ANYWHERE TO START LUME
+      </div>
+    )
+  }
 
   return (
     <div style={{

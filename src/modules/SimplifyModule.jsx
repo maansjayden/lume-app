@@ -14,6 +14,7 @@ function SimplifyModule({ isActive }) {
     if (isActive && videoRef.current) {
       startCamera(videoRef.current).catch(err => {
         console.error("Camera Error:", err);
+        speak("Simplify camera failed. Please check permissions.");
       });
     }
 
@@ -25,18 +26,24 @@ function SimplifyModule({ isActive }) {
   }, [isActive]);
 
   const handleCapture = async () => {
-    if (processing || !videoRef.current) return;
+    if (processing || !isActive) return;
 
     setProcessing(true);
     window.dispatchEvent(new CustomEvent('lume-thinking', { detail: true }));
 
     try {
-      const rawFrame = captureFrame(videoRef.current);
-      const compressed = await compressImage(rawFrame, 0.6);
+      const frame = videoRef.current;
+      if (!frame || frame.readyState !== 4) {
+        await startCamera(frame);
+      }
+
+      const rawFrame = captureFrame(frame);
+      const compressed = await compressImage(rawFrame, 0.7); // Higher quality for text
       const text = await callGemini(PROMPTS.SIMPLIFY, compressed);
       speak(text);
     } catch (error) {
       console.error("Simplify Error:", error);
+      speak("Sorry, I couldn't simplify that image.");
     } finally {
       setProcessing(false);
       window.dispatchEvent(new CustomEvent('lume-thinking', { detail: false }));

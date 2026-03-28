@@ -12,34 +12,37 @@ export const startListening = (onModuleSwitch, onSpeech) => {
   recognition.continuous = true;
   recognition.lang = 'en-US';
   recognition.interimResults = false;
+  let isIntentionallyStopped = false;
 
   recognition.onresult = (event) => {
     const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
     
-    if (transcript.includes('vision') || transcript.includes('eye') || transcript.includes('around') || transcript.includes('see')) {
+    // Check for specific mode switches
+    if (transcript.includes('vision mode') || transcript.includes('look around')) {
       onModuleSwitch('vision');
-    } else if (transcript.includes('scan') || transcript.includes('label') || transcript.includes('food') || transcript.includes('item')) {
-      onModuleSwitch('scan');
-    } else if (transcript.includes('navigate') || transcript.includes('robot') || transcript.includes('traffic') || transcript.includes('street') || transcript.includes('walk')) {
-      onModuleSwitch('navigate');
-    } else if (transcript.includes('read') || transcript.includes('text') || transcript.includes('document') || transcript.includes('book') || transcript.includes('page')) {
+    } else if (transcript.includes('simplify mode') || transcript.includes('read text')) {
       onModuleSwitch('read');
-    } else if (transcript.includes('lume') || transcript.includes('hello')) {
-      if (onSpeech) onSpeech(transcript);
     } else if (onSpeech) {
       onSpeech(transcript);
     }
   };
 
   recognition.onerror = (event) => {
-    console.error("Speech recognition error:", event.error);
-    if (event.error === 'no-speech' || event.error === 'audio-capture') {
-      try { recognition.start(); } catch (e) {}
+    if (event.error === 'not-allowed') {
+      isIntentionallyStopped = true;
+      console.error("Speech recognition permission denied.");
     }
+    console.error("Speech recognition error:", event.error);
   };
 
   recognition.onend = () => {
-    try { recognition.start(); } catch (e) {}
+    if (!isIntentionallyStopped) {
+      try {
+        recognition.start();
+      } catch (e) {
+        console.error("Failed to restart recognition:", e);
+      }
+    }
   };
 
   try {
@@ -48,5 +51,11 @@ export const startListening = (onModuleSwitch, onSpeech) => {
     console.error("Failed to start recognition:", e);
   }
 
-  return recognition;
+  // Return an object that has a stop method
+  return {
+    stop: () => {
+      isIntentionallyStopped = true;
+      recognition.stop();
+    }
+  };
 };

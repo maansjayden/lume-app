@@ -1,17 +1,44 @@
 export async function startCamera(videoElement) {
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: "environment" }
-  });
-  videoElement.srcObject = stream;
-  return stream;
+  if (!videoElement) return;
+
+  // If there's already a stream, stop it first to refresh
+  if (videoElement.srcObject) {
+    const tracks = videoElement.srcObject.getTracks();
+    tracks.forEach(track => track.stop());
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { 
+        facingMode: "environment",
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
+    });
+    
+    videoElement.srcObject = stream;
+    
+    // Ensure the video plays. playsInline is crucial for iOS.
+    videoElement.setAttribute('playsinline', true);
+    videoElement.setAttribute('autoplay', true);
+    videoElement.setAttribute('muted', true);
+    
+    await videoElement.play().catch(e => console.warn("Video play interrupted:", e));
+    
+    return stream;
+  } catch (err) {
+    console.error("Error accessing camera:", err);
+    throw err;
+  }
 }
 
 export function stopCamera(videoElement) {
+  if (!videoElement || !videoElement.srcObject) return;
+  
   const stream = videoElement.srcObject;
-  if (stream) {
-    stream.getTracks().forEach(track => track.stop());
-    videoElement.srcObject = null;
-  }
+  const tracks = stream.getTracks();
+  tracks.forEach(track => track.stop());
+  videoElement.srcObject = null;
 }
 
 export function captureFrame(videoElement) {
