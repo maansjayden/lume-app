@@ -62,12 +62,12 @@ function App() {
     } else if (lower.includes('simplify this')) {
       window.dispatchEvent(new CustomEvent('lume-command', { detail: 'SIMPLIFY_THIS' }))
     } else if (lower.includes('lume') || lower.includes('help')) {
-      speak("Lume is ready. Say 'vision' or 'simplify' to switch modes. You can also say 'check for allergies' or 'simplify this'.")
+      speak("How can I help you? You can ask me to switch to vision or simplify mode, check for allergies, or simplify a document.")
     }
   }
 
   useEffect(() => {
-    speak("Welcome to LUME. Vision mode is active. Shake to scan your surroundings.");
+    speak("Lume is ready. Say Hello Lume for help.");
     
     const recognition = startListening(
       (module) => { /* handled in handleGlobalVoice */ },

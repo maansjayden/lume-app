@@ -24,6 +24,8 @@ function VisionModule({ isActive }) {
     };
   }, [isActive]);
 
+  const lastSpokenRef = useRef("");
+
   const performSafetyCheck = async () => {
     if (processing || !isActive) return;
     try {
@@ -31,12 +33,13 @@ function VisionModule({ isActive }) {
       const compressed = await compressImage(rawFrame, 0.5);
       const text = await callGemini(PROMPTS.VISION, compressed);
       
-      // Safety triggers
-      if (text.includes("Green Robot") || text.includes("Obstacle")) {
-        if (text.includes("Obstacle")) {
-          navigator.vibrate?.([200, 100, 200]); // Haptic feedback
+      // Only speak if the information is new or important
+      if (text !== lastSpokenRef.current) {
+        if (text.toLowerCase().includes("caution") || text.toLowerCase().includes("danger")) {
+          navigator.vibrate?.([200, 100, 200]);
         }
         speak(text);
+        lastSpokenRef.current = text;
       }
     } catch (e) {
       console.error("Safety Check Error:", e);

@@ -24,6 +24,8 @@ export const startListening = (onModuleSwitch, onSpeech) => {
       onModuleSwitch('navigate');
     } else if (transcript.includes('read') || transcript.includes('text') || transcript.includes('document') || transcript.includes('book') || transcript.includes('page')) {
       onModuleSwitch('read');
+    } else if (transcript.includes('lume') || transcript.includes('hello')) {
+      if (onSpeech) onSpeech(transcript);
     } else if (onSpeech) {
       onSpeech(transcript);
     }
