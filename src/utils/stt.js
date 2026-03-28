@@ -15,17 +15,27 @@ export const startListening = (onModuleSwitch, onSpeech) => {
   let isIntentionallyStopped = false;
 
   recognition.onresult = (event) => {
-    if (isLumeSpeaking()) return;
+    console.log("Speech result received:", event);
+    if (isLumeSpeaking()) {
+      console.log("Lume is speaking, ignoring speech input.");
+      return;
+    }
 
     const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
+    console.log("Transcript:", transcript);
     
     // Check for specific mode switches
     if (transcript.includes('vision mode') || transcript.includes('look around')) {
+      console.log("Mode switch detected: vision");
       onModuleSwitch('vision');
     } else if (transcript.includes('simplify mode') || transcript.includes('read text')) {
+      console.log("Mode switch detected: simplify");
       onModuleSwitch('read');
     } else if (onSpeech) {
+      console.log("Calling onSpeech callback with:", transcript);
       onSpeech(transcript);
+    } else {
+      console.log("No callback available");
     }
   };
 

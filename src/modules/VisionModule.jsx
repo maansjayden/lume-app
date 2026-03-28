@@ -20,7 +20,12 @@ function VisionModule({ isActive }) {
   }, [processing]);
 
   const handleUserQuestion = async (transcript) => {
-    if (processingRef.current || isLumeSpeaking()) return;
+    console.log("User question received:", transcript);
+    
+    if (processingRef.current || isLumeSpeaking()) {
+      console.log("Ignoring: processing=", processingRef.current, "speaking=", isLumeSpeaking());
+      return;
+    }
     
     setProcessing(true);
     processingRef.current = true;
@@ -31,6 +36,7 @@ function VisionModule({ isActive }) {
       const frame = videoRef.current;
       if (!frame || frame.readyState !== 4) {
         speak("Camera is not ready. Please try again.");
+        console.log("Camera not ready");
         return;
       }
 
@@ -48,6 +54,7 @@ IMPORTANT: If food or drink is visible in the image, ALWAYS include potential al
 Use plain text only. NEVER use asterisks or bolding.`;
       
       const text = await callGemini(userPrompt, compressed);
+      console.log("Response:", text);
       speak(text);
       lastSpokenRef.current = text;
     } catch (error) {
@@ -62,6 +69,7 @@ Use plain text only. NEVER use asterisks or bolding.`;
 
   useEffect(() => {
     if (isActive) {
+      console.log("Vision Mode activated - starting camera and listener");
       startCamera(videoRef.current).catch(err => {
         console.error("Camera error:", err);
         speak("Camera failed to start. Please check permissions.");
@@ -73,8 +81,11 @@ Use plain text only. NEVER use asterisks or bolding.`;
       speak("Vision mode active. You can ask me questions about what the camera sees. For example, say what is in front of me, or describe that object. I will analyze the camera and answer.");
       
       // Start listening for user questions in Vision Mode
+      console.log("Starting listener...");
       listeningRef.current = startListening(() => {}, handleUserQuestion);
+      console.log("Listener started:", listeningRef.current);
     } else {
+      console.log("Vision Mode deactivated - stopping camera and listener");
       stopCamera(videoRef.current);
       if (monitoringIntervalRef.current) clearInterval(monitoringIntervalRef.current);
       
