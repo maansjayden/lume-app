@@ -39,7 +39,8 @@ function SimplifyModule({ isActive }) {
     processingRef.current = true;
     setTapped(true);
     setTimeout(() => setTapped(false), 150);
-    window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: true } }));
+    speak("Simplifying.");
+    window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: true, quiet: true } }));
 
     try {
       const frame = videoRef.current;

@@ -78,7 +78,7 @@ Use plain text only. NEVER use asterisks or bolding.`;
       monitoringIntervalRef.current = setInterval(performSafetyCheck, 5000);
       
       // Voice guidance for visually impaired users
-      speak("Vision mode active. You can ask me questions about what the camera sees. For example, say what is in front of me, or describe that object. I will analyze the camera and answer.");
+      speak("Ready.");
       
       // Start listening for user questions in Vision Mode
       console.log("Starting listener...");
@@ -157,8 +157,8 @@ Use plain text only. NEVER use asterisks or bolding.`;
     setTimeout(() => setTapped(false), 150);
     
     // Audio feedback confirming action
-    speak("Analyzing.");
-    window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: true } }));
+    speak("Scanning.");
+    window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: true, quiet: true } }));
 
     try {
       const frame = videoRef.current;
