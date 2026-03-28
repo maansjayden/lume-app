@@ -1,66 +1,31 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import VisionModule from './modules/VisionModule'
 import ScanModule from './modules/ScanModule'
 import NavigateModule from './modules/NavigateModule'
 import ReadModule from './modules/ReadModule'
 import { speak } from './utils/tts'
+import { startListening } from './utils/stt'
 
 function App() {
   const [activeModule, setActiveModule] = useState('vision')
+  const activeModuleRef = useRef(activeModule)
+
+  useEffect(() => {
+    activeModuleRef.current = activeModule
+  }, [activeModule])
 
   useEffect(() => {
     speak("Welcome to LUME. Tap anywhere to describe your surroundings. Say Read to switch to document mode.");
     
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SpeechRecognition) {
-      console.warn("Speech recognition not supported in this browser.")
-      return
-    }
-
-    const recognition = new SpeechRecognition()
-    recognition.continuous = true
-    recognition.lang = 'en-US'
-    recognition.interimResults = false
-
-    recognition.onresult = (event) => {
-      const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase()
-      
-      if (transcript.includes('vision') || transcript.includes('eye')) {
-        setActiveModule('vision')
-        speak("Switched to Vision mode")
-      } else if (transcript.includes('scan')) {
-        setActiveModule('scan')
-        speak("Switched to Scan mode")
-      } else if (transcript.includes('navigate')) {
-        setActiveModule('navigate')
-        speak("Switched to Navigate mode")
-      } else if (transcript.includes('read')) {
-        setActiveModule('read')
-        speak("Switched to Read mode")
+    const recognition = startListening((module) => {
+      if (module !== activeModuleRef.current) {
+        setActiveModule(module)
+        speak(`Switched to ${module} mode`)
       }
-    }
-
-    recognition.onerror = (event) => {
-      console.error("Speech recognition error:", event.error)
-      // Attempt to restart on certain errors
-      if (event.error === 'no-speech' || event.error === 'audio-capture') {
-        try { recognition.start() } catch (e) {}
-      }
-    }
-
-    recognition.onend = () => {
-      // Keep listening
-      try { recognition.start() } catch (e) {}
-    }
-
-    try {
-      recognition.start()
-    } catch (e) {
-      console.error("Failed to start recognition:", e)
-    }
+    })
 
     return () => {
-      recognition.stop()
+      if (recognition) recognition.stop()
     }
   }, [])
 
