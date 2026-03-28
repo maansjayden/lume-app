@@ -3,6 +3,7 @@ import { startCamera, stopCamera, captureFrame } from '../utils/camera.js';
 import { compressImage } from '../utils/compress.js';
 import { callGemini } from '../utils/gemini.js';
 import { speak, isLumeSpeaking } from '../utils/tts.js';
+import { startListening } from '../utils/stt.js';
 import { PROMPTS } from '../prompts.js';
 
 function VisionModule({ isActive }) {
@@ -12,10 +13,52 @@ function VisionModule({ isActive }) {
   const videoRef = useRef(null);
   const monitoringIntervalRef = useRef(null);
   const lastSpokenRef = useRef("");
+  const listeningRef = useRef(null);
 
   useEffect(() => {
     processingRef.current = processing;
   }, [processing]);
+
+  const handleUserQuestion = async (transcript) => {
+    if (processingRef.current || isLumeSpeaking()) return;
+    
+    setProcessing(true);
+    processingRef.current = true;
+    speak("Analyzing your question.");
+    window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: true } }));
+
+    try {
+      const frame = videoRef.current;
+      if (!frame || frame.readyState !== 4) {
+        speak("Camera is not ready. Please try again.");
+        return;
+      }
+
+      const rawFrame = captureFrame(frame);
+      const compressed = await compressImage(rawFrame, 0.6);
+      
+      // Create a prompt that includes the user's question and image context
+      // with emphasis on allergen detection for health-conscious blind users
+      const userPrompt = `You are Lume, a helpful AI assistant for the visually impaired. 
+The user is blind and asked: "${transcript}"
+Look at the image and answer their question in one or two sentences only. Be brief and direct.
+
+IMPORTANT: If food or drink is visible in the image, ALWAYS include potential allergens or health warnings in those same 1-2 sentences. This is critical for the user's health and safety.
+
+Use plain text only. NEVER use asterisks or bolding.`;
+      
+      const text = await callGemini(userPrompt, compressed);
+      speak(text);
+      lastSpokenRef.current = text;
+    } catch (error) {
+      console.error("Vision Question Error:", error);
+      speak("Sorry, I could not analyze that. Please try again.");
+    } finally {
+      setProcessing(false);
+      processingRef.current = false;
+      window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: false } }));
+    }
+  };
 
   useEffect(() => {
     if (isActive) {
@@ -25,12 +68,35 @@ function VisionModule({ isActive }) {
       });
       // Continuous monitoring for safety (every 5 seconds instead of 4 for more breathing room)
       monitoringIntervalRef.current = setInterval(performSafetyCheck, 5000);
+      
+      // Voice guidance for visually impaired users
+      speak("Vision mode active. You can ask me questions about what the camera sees. For example, say what is in front of me, or describe that object. I will analyze the camera and answer.");
+      
+      // Start listening for user questions in Vision Mode
+      listeningRef.current = startListening(() => {}, handleUserQuestion);
     } else {
       stopCamera(videoRef.current);
       if (monitoringIntervalRef.current) clearInterval(monitoringIntervalRef.current);
+      
+      // Stop listening when Vision Mode becomes inactive
+      if (listeningRef.current) {
+        try {
+          listeningRef.current.stop();
+          listeningRef.current = null;
+        } catch (e) {
+          console.error("Error stopping listener:", e);
+        }
+      }
     }
     return () => {
       if (monitoringIntervalRef.current) clearInterval(monitoringIntervalRef.current);
+      if (listeningRef.current) {
+        try {
+          listeningRef.current.stop();
+        } catch (e) {
+          console.error("Error stopping listener:", e);
+        }
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive]);
@@ -57,8 +123,10 @@ function VisionModule({ isActive }) {
       if (text !== lastSpokenRef.current || isUrgent) {
         if (isUrgent) {
           navigator.vibrate?.([200, 100, 200]);
+          speak("Alert: " + text);
+        } else {
+          speak(text);
         }
-        speak(text);
         lastSpokenRef.current = text;
       }
     } catch (e) {
@@ -76,6 +144,9 @@ function VisionModule({ isActive }) {
     processingRef.current = true;
     setTapped(true);
     setTimeout(() => setTapped(false), 150);
+    
+    // Audio feedback confirming action
+    speak("Analyzing.");
     window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: true } }));
 
     try {
@@ -92,6 +163,7 @@ function VisionModule({ isActive }) {
       lastSpokenRef.current = text;
     } catch (error) {
       console.error("Vision Error:", error);
+      speak("Sorry, analysis failed. Please try again.");
     } finally {
       setProcessing(false);
       processingRef.current = false;
