@@ -1,41 +1,56 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { startCamera, stopCamera, captureFrame } from '../utils/camera.js';
 import { compressImage } from '../utils/compress.js';
 import { callGemini } from '../utils/gemini.js';
 import { speak } from '../utils/tts.js';
 import { PROMPTS } from '../prompts.js';
 
-function ScanModule({ isActive }) {
+function SimplifyModule({ isActive }) {
   const [processing, setProcessing] = useState(false);
-  const [result, setResult] = useState("");
   const videoRef = useRef(null);
 
   useEffect(() => {
-    if (isActive) {
-      startCamera(videoRef.current).catch(err => console.error("Camera error:", err));
-    } else {
-      stopCamera(videoRef.current);
+    if (isActive && videoRef.current) {
+      startCamera(videoRef.current).catch(err => {
+        console.error("Camera Error:", err);
+      });
     }
+
+    return () => {
+      if (videoRef.current) {
+        stopCamera(videoRef.current);
+      }
+    };
   }, [isActive]);
 
   const handleCapture = async () => {
-    if (processing) return;
+    if (processing || !videoRef.current) return;
+
     setProcessing(true);
-    setResult("Processing...");
+    window.dispatchEvent(new CustomEvent('lume-thinking', { detail: true }));
 
     try {
       const rawFrame = captureFrame(videoRef.current);
       const compressed = await compressImage(rawFrame, 0.6);
-      const text = await callGemini(PROMPTS.SCAN, compressed);
-      setResult(text);
+      const text = await callGemini(PROMPTS.SIMPLIFY, compressed);
       speak(text);
     } catch (error) {
-      console.error("Scan Error:", error);
-      setResult("Error scanning image.");
+      console.error("Simplify Error:", error);
     } finally {
       setProcessing(false);
+      window.dispatchEvent(new CustomEvent('lume-thinking', { detail: false }));
     }
   };
+
+  useEffect(() => {
+    const handleCommand = (e) => {
+      if (e.detail === 'SIMPLIFY_THIS' && isActive) {
+        handleCapture();
+      }
+    };
+    window.addEventListener('lume-command', handleCommand);
+    return () => window.removeEventListener('lume-command', handleCommand);
+  }, [isActive, processing]);
 
   useEffect(() => {
     const handleMotion = (event) => {
@@ -57,45 +72,42 @@ function ScanModule({ isActive }) {
       onClick={handleCapture}
       style={{
         flex: 1,
-        position: "relative",
-        overflow: "hidden",
         display: "flex",
         flexDirection: "column",
+        position: "relative",
         backgroundColor: "#000",
+        color: "#FFF",
+        overflow: "hidden",
         cursor: "pointer"
-      }}
-    >
-      <video 
+      }}>
+      <video
         ref={videoRef}
-        autoPlay 
-        playsInline 
+        autoPlay
+        playsInline
         muted
         style={{
           width: "100%",
           height: "100%",
           objectFit: "cover",
-          opacity: 0.4,
-          position: "absolute",
-          top: 0,
-          left: 0
+          opacity: 0.6
         }}
       />
-      
+
       <div style={{
-        marginTop: "auto",
-        padding: "20px",
+        position: "absolute",
+        bottom: "40px",
+        left: "50%",
+        transform: "translateX(-50%)",
         zIndex: 2,
-        backgroundColor: "rgba(10, 10, 10, 0.8)",
-        borderTop: "4px solid #1A7A3A",
-        minHeight: "100px",
-        color: "#FFF",
-        fontSize: "1.2rem",
-        textAlign: "center"
+        color: "rgba(255, 255, 255, 0.7)",
+        fontSize: "0.9rem",
+        textAlign: "center",
+        pointerEvents: "none"
       }}>
-        {processing ? "Processing..." : result || "Tap or shake to scan"}
+        TAP OR SHAKE TO SIMPLIFY TEXT
       </div>
     </div>
   );
 }
 
-export default ScanModule;
+export default SimplifyModule;
