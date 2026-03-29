@@ -3,8 +3,6 @@ import VisionModule from './modules/VisionModule'
 import SimplifyModule from './modules/SimplifyModule'
 import { speak } from './utils/tts'
 import { startListening } from './utils/stt'
-import { callGemini } from './utils/gemini'
-import { PROMPTS } from './prompts'
 
 function App() {
   const [started, setStarted] = useState(false)
@@ -41,78 +39,47 @@ function App() {
     }
   }
 
-  const handleGlobalVoice = async (transcript) => {
-    const lower = transcript.toLowerCase()
-    
-    // Check for mode switches
+  const handleGlobalVoice = (transcript) => {
+    const lower = transcript.toLowerCase().trim()
+
     if (lower.includes('switch to vision') || lower.includes('go to vision') || (lower.includes('vision') && lower.includes('mode'))) {
-      switchModule('vision')
-      return
+      switchModule('vision'); return;
     }
     if (lower.includes('switch to simplify') || lower.includes('go to simplify') || (lower.includes('simplify') && lower.includes('mode')) || lower === 'read' || lower.includes('read mode')) {
-      switchModule('simplify')
-      return
+      switchModule('simplify'); return;
     }
-
-    // Special commands
     if (lower.includes('check for allergies') || lower.includes('allergy')) {
-      window.dispatchEvent(new CustomEvent('lume-command', { detail: 'ALLERGY_CHECK' }))
-      return
-    } else if (lower.includes('simplify this') || lower.includes('read this') || lower.includes('read it')) {
-      window.dispatchEvent(new CustomEvent('lume-command', { detail: 'SIMPLIFY_THIS' }))
-      return
+      window.dispatchEvent(new CustomEvent('lume-command', { detail: 'ALLERGY_CHECK' })); return;
+    }
+    if (lower.includes('simplify this') || lower.includes('read this') || lower.includes('read it')) {
+      window.dispatchEvent(new CustomEvent('lume-command', { detail: 'SIMPLIFY_THIS' })); return;
     }
 
-    // General Conversation / Interaction
-    if (lower.includes('lume') || lower.includes('hello') || lower.includes('hi')) {
-      if (lower.includes('help') || (lower.includes('what') && lower.includes('do'))) {
-        speak("I am Lume. You are in " + activeModuleRef.current + " mode. You can say 'switch to simplify' or 'switch to vision'. You can also ask me to check for allergies, simplify a document, or just talk to me.")
-        return
-      }
-
-      // If it's a general question or address to Lume
-      window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: true, quiet: true } }))
-      try {
-        const response = await callGemini(`${PROMPTS.CONVERSATION}\nUser said: ${transcript}`)
-        speak(response)
-      } catch (error) {
-        console.error("Conversation Error:", error)
-      } finally {
-        window.dispatchEvent(new CustomEvent('lume-thinking', { detail: { active: false } }))
-      }
-    }
+    // Route everything else to the active module
+    window.dispatchEvent(new CustomEvent('lume-command', { detail: { type: 'USER_SPEECH', transcript } }));
   }
 
   useEffect(() => {
     if (!started) return;
 
-    // Welcome message requested by the user
     speak("Welcome to Lume. Tap anywhere to describe your surroundings. Say Read to switch to simplify mode.");
-    
+
     const listener = startListening(
-      (module) => { 
-        if (module === 'read') switchModule('simplify');
+      (module) => {
+        if (module === 'simplify') switchModule('simplify');
         else if (module === 'vision') switchModule('vision');
       },
       handleGlobalVoice
     )
 
-    return () => {
-      if (listener) listener.stop()
-    }
+    return () => { if (listener) listener.stop() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [started])
 
-  const handleStart = () => {
-    setStarted(true)
-  }
-
-  // Listen for "Busy Processing" signal from modules
   useEffect(() => {
     const handleThinking = (e) => {
       const isQuiet = e.detail?.quiet === true
       const isActive = e.detail === true || e.detail?.active === true
-
       if (isActive) {
         setIsLumeThinking(true)
         if (!isQuiet) speak("Lume is thinking...")
@@ -126,26 +93,16 @@ function App() {
 
   if (!started) {
     return (
-      <div 
-        onClick={handleStart}
+      <div
+        onClick={() => setStarted(true)}
         role="button"
         aria-label="Tap to start Lume"
         style={{
-          width: "100vw",
-          height: "100vh",
-          backgroundColor: "#000",
-          color: "#0096FF",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: "2rem",
-          fontWeight: "bold",
-          textAlign: "center",
-          padding: "20px",
-          boxSizing: "border-box",
-          cursor: "pointer",
-          userSelect: "none"
+          width: "100vw", height: "100vh", backgroundColor: "#000",
+          color: "#0096FF", display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          fontSize: "2rem", fontWeight: "bold", textAlign: "center",
+          padding: "20px", boxSizing: "border-box", cursor: "pointer", userSelect: "none"
         }}
       >
         <div style={{ fontSize: "5rem", marginBottom: "20px" }}>👁️</div>
@@ -156,16 +113,9 @@ function App() {
 
   return (
     <div style={{
-      width: "100vw",
-      height: "100vh",
-      display: "flex",
-      flexDirection: "column",
-      backgroundColor: "#000",
-      color: "#FFF",
-      margin: 0,
-      padding: 0,
-      overflow: "hidden",
-      position: "relative"
+      width: "100vw", height: "100vh", display: "flex", flexDirection: "column",
+      backgroundColor: "#000", color: "#FFF", margin: 0, padding: 0,
+      overflow: "hidden", position: "relative"
     }}>
       {activeModule === 'vision' ? (
         <VisionModule isActive={true} />
@@ -175,60 +125,36 @@ function App() {
 
       {isLumeThinking && (
         <div style={{
-          position: "absolute",
-          top: "20px",
-          left: "50%",
-          transform: "translateX(-50%)",
-          padding: "10px 20px",
-          backgroundColor: "rgba(0, 150, 255, 0.4)",
-          borderRadius: "30px",
-          fontSize: "1rem",
-          fontWeight: "bold",
-          zIndex: 100,
-          backdropFilter: "blur(10px)",
-          border: "2px solid rgba(0, 150, 255, 0.6)",
-          animation: "pulse 1.5s infinite",
-          pointerEvents: "none"
+          position: "absolute", top: "20px", left: "50%",
+          transform: "translateX(-50%)", padding: "10px 20px",
+          backgroundColor: "rgba(0, 150, 255, 0.4)", borderRadius: "30px",
+          fontSize: "1rem", fontWeight: "bold", zIndex: 100,
+          backdropFilter: "blur(10px)", border: "2px solid rgba(0, 150, 255, 0.6)",
+          animation: "pulse 1.5s infinite", pointerEvents: "none"
         }}>
           LUME IS THINKING...
         </div>
       )}
-      
+
       <nav style={{
-        display: "flex",
-        height: "80px",
-        backgroundColor: "#000",
-        borderTop: "2px solid #333",
-        zIndex: 100,
-        position: "fixed",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        paddingBottom: "env(safe-area-inset-bottom)",
-        marginBottom: "30px"
+        display: "flex", height: "80px", backgroundColor: "#000",
+        borderTop: "2px solid #333", zIndex: 100,
+        position: "fixed", bottom: 0, left: 0, right: 0,
+        paddingBottom: "env(safe-area-inset-bottom)", marginBottom: "30px"
       }}>
         {['vision', 'simplify'].map(mod => (
-          <button 
+          <button
             key={mod}
-            onClick={(e) => {
-              e.stopPropagation()
-              switchModule(mod)
-            }}
+            onClick={(e) => { e.stopPropagation(); switchModule(mod) }}
             aria-label={`Switch to ${mod} mode`}
             style={{
               flex: 1,
               backgroundColor: activeModule === mod ? "#222" : "transparent",
               color: activeModule === mod ? "#0096FF" : "#888",
-              border: "none",
-              textTransform: "uppercase",
-              fontSize: "1rem",
-              fontWeight: "bold",
-              letterSpacing: "2px",
-              cursor: "pointer",
-              minHeight: "80px",
-              transition: "background-color 0.2s",
-              WebkitTapHighlightColor: "transparent",
-              touchAction: "manipulation"
+              border: "none", textTransform: "uppercase",
+              fontSize: "1rem", fontWeight: "bold", letterSpacing: "2px",
+              cursor: "pointer", minHeight: "80px", transition: "background-color 0.2s",
+              WebkitTapHighlightColor: "transparent", touchAction: "manipulation"
             }}
           >
             {mod}

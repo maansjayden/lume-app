@@ -1,8 +1,12 @@
 import { isLumeSpeaking } from './tts';
 
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+function getSpeechRecognition() {
+  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+}
 
 export const startListening = (onModuleSwitch, onSpeech) => {
+  const SpeechRecognition = getSpeechRecognition();
+
   if (!SpeechRecognition) {
     console.warn("Speech recognition not supported in this browser.");
     return null;
@@ -10,64 +14,64 @@ export const startListening = (onModuleSwitch, onSpeech) => {
 
   const recognition = new SpeechRecognition();
   recognition.continuous = true;
-  recognition.lang = 'en-US';
+  recognition.lang = 'en-ZA';
   recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
   let isIntentionallyStopped = false;
 
   recognition.onresult = (event) => {
-    console.log("Speech result received:", event);
     if (isLumeSpeaking()) {
-      console.log("Lume is speaking, ignoring speech input.");
+      console.log("Lume is speaking, ignoring mic input.");
       return;
     }
 
-    const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
-    console.log("Transcript:", transcript);
-    
-    // Check for specific mode switches
+    const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+    console.log("STT transcript:", transcript);
+
     if (transcript.includes('vision mode') || transcript.includes('look around')) {
-      console.log("Mode switch detected: vision");
       onModuleSwitch('vision');
-    } else if (transcript.includes('simplify mode') || transcript.includes('read text')) {
-      console.log("Mode switch detected: simplify");
-      onModuleSwitch('read');
+    } else if (
+      transcript.includes('simplify mode') ||
+      transcript.includes('read text') ||
+      transcript === 'read' ||
+      transcript.includes('read mode')
+    ) {
+      onModuleSwitch('simplify');
     } else if (onSpeech) {
-      console.log("Calling onSpeech callback with:", transcript);
       onSpeech(transcript);
-    } else {
-      console.log("No callback available");
     }
   };
 
   recognition.onerror = (event) => {
     if (event.error === 'not-allowed') {
       isIntentionallyStopped = true;
-      console.error("Speech recognition permission denied.");
+      console.error("Microphone permission denied.");
+      return;
     }
-    console.error("Speech recognition error:", event.error);
+    console.warn("STT error (non-fatal):", event.error);
   };
 
   recognition.onend = () => {
     if (!isIntentionallyStopped) {
-      try {
-        recognition.start();
-      } catch (e) {
-        console.error("Failed to restart recognition:", e);
-      }
+      setTimeout(() => {
+        try { recognition.start(); }
+        catch (e) { console.warn("STT restart failed:", e.message); }
+      }, 300);
     }
   };
 
   try {
     recognition.start();
+    console.log("STT started.");
   } catch (e) {
-    console.error("Failed to start recognition:", e);
+    console.error("STT initial start failed:", e.message);
+    return null;
   }
 
-  // Return an object that has a stop method
   return {
     stop: () => {
       isIntentionallyStopped = true;
-      recognition.stop();
+      try { recognition.stop(); } catch (e) { /* already stopped */ }
     }
   };
 };
