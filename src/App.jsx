@@ -48,7 +48,7 @@ function App() {
     if (lower.includes('switch to simplify') || lower.includes('go to simplify') || (lower.includes('simplify') && lower.includes('mode')) || lower === 'read' || lower.includes('read mode')) {
       switchModule('simplify'); return;
     }
-    if (lower.includes('check for allergies') || lower.includes('allergy')) {
+    if (lower.includes('check for allergies') || lower.includes('allergy') || lower.includes('allergies') || lower.includes('check label') || lower.includes('what allergens') || lower.includes('is this safe')) {
       window.dispatchEvent(new CustomEvent('lume-command', { detail: 'ALLERGY_CHECK' })); return;
     }
     if (lower.includes('simplify this') || lower.includes('read this') || lower.includes('read it')) {
