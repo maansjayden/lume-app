@@ -109,8 +109,8 @@ Use plain text only. NEVER use asterisks or bolding.`;
     }
   };
 
-  const handleCapture = async (customPrompt = PROMPTS.VISION) => {
-    if (processingRef.current) return;
+  const handleCapture = async (customPrompt = PROMPTS.VISION, isForced = false) => {
+    if (processingRef.current && !isForced) return;
 
     setProcessing(true);
     processingRef.current = true;
@@ -145,7 +145,7 @@ Use plain text only. NEVER use asterisks or bolding.`;
   useEffect(() => {
     const handleCommand = (e) => {
       if (!isActive) return;
-      if (e.detail === 'ALLERGY_CHECK') handleCapture(PROMPTS.ALLERGY_CHECK);
+      if (e.detail === 'ALLERGY_CHECK') handleCapture(PROMPTS.ALLERGY_CHECK, true);
       if (e.detail?.type === 'USER_SPEECH') handleUserQuestion(e.detail.transcript);
     };
     window.addEventListener('lume-command', handleCommand);

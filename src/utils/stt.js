@@ -37,6 +37,16 @@ export const startListening = (onModuleSwitch, onSpeech) => {
       transcript.includes('read mode')
     ) {
       onModuleSwitch('simplify');
+    } else if (
+      transcript.includes('allergy') ||
+      transcript.includes('allergies') ||
+      transcript.includes('alergies') ||
+      transcript.includes('scan') ||
+      transcript.includes('check label')
+    ) {
+      // If we detect an allergy/scan command, we send it to the active module via onSpeech
+      // which will be handled by handleGlobalVoice in App.jsx
+      if (onSpeech) onSpeech(transcript);
     } else if (onSpeech) {
       onSpeech(transcript);
     }
